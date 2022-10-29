@@ -41,13 +41,12 @@ end; //
 -- Xóa 1 sản phẩm trong cart của người dung
 DROP PROCEDURE IF EXISTS sp_removeProductInCart;
 delimiter //
-delimiter //
 CREATE PROCEDURE `sp_removeProductInCart`(
 	in pCartId bigint,
     in pProductId bigint,
     out pMessage varchar(200)
 )
-begin
+begin 
 	declare pDeleteCart varchar(200);
     set pDeleteCart = "";
 	-- Nếu sản phẩm trong bảng cart_item
@@ -63,8 +62,9 @@ begin
 end //
 
 -- Kiểm tra số lượng sản phẩm
+delimiter //
 drop procedure if exists sp_checkProductQuantity;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_checkProductQuantiy`(
+CREATE PROCEDURE `sp_checkProductQuantiy`(
 	in pProductId integer,
     in pQuantity integer,
     out pValid boolean
@@ -76,7 +76,7 @@ BEGIN
     if(pQuantity <= pTotal) then
 		set pValid = true;
     end if;
-END
+END //
 
 -- Cải tiến thêm sản phẩm vào giỏ hàng - VẬN DỤNG Tham số INOUT
 /**
