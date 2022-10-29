@@ -61,3 +61,43 @@ begin
     end if;
 end;
 //
+
+-- Cải tiến thêm sản phẩm vào giỏ hàng - VẬN DỤNG Tham số INOUT
+/**
+	Lần đầu: truyền các thông tin về giỏ hàng lên: sessionid, token, idstatus, productId, quantity
+    Nếu cartId chưa có (=NULL) thì tạo mới và gửi về MÃ CARDID được tạo
+    Nếu cartId đã có thì thêm và cập nhật số lượng cho sản phẩm
+**/
+DROP PROCEDURE IF EXISTS sp_addToCartAdvance;
+delimiter //
+create procedure sp_addToCartAdvance(
+	inout sCartId bigint,
+	in sSessionId varchar(100),
+    in sTokenId varchar(100),
+    in sStatus SMALLINT,
+    in sProductId bigint,
+    in sQuantity SMALLINT,
+    in sPrice float,
+    out sMessage varchar(200)
+)
+begin
+    declare pAmount SMALLINT;
+    declare pTempTotal SMALLINT;
+    if((not exists (select * from cart where `id` = sCartId)) or sCartId = NULL) then
+		INSERT INTO `cart` (`userId`,`sessionId`, `token`, `status`, `createdAt`) 
+		VALUES ('1', sSessionId, sTokenId, '1', '2022-10-20 00:00:00');
+        set sCartId = (SELECT max(id) from cart);
+    end if;
+    
+    if(exists (SELECT `productId` FROM `cart_item` where `productId`  = sProductId and `cartId` = sCartId)) then
+            set pAmount = (SELECT `quantity` FROM `cart_item` where `productId`  = sProductId and `cartId` = sCartId);
+            set pTempTotal = pAmount + sQuantity;
+			UPDATE `cart_item` SET `quantity` = pTempTotal  WHERE (`productId`  = sProductId and `cartId` = sCartId);
+            set sMessage = concat("Update quantity success ","cartId:", sCartId,"productId:",sProductId,"quantity:", pTempTotal);
+		else
+            INSERT INTO `cart_item` (`productId`, `cartId`, `sku`, `price`, `discount`, 
+			`quantity`, `active`, `createdAt`, `updatedAt`) VALUES 
+			(sProductId, sCartId, 'sp2', sPrice, '0', sQuantity, '1', now(), now());
+            set sMessage = concat("Add item to cart success ","cartId:", sCartId,"productId:", sProductId, "quantity:" , 1);
+        end if;
+end; //
