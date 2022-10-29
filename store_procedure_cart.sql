@@ -41,63 +41,107 @@ end; //
 -- Xóa 1 sản phẩm trong cart của người dung
 DROP PROCEDURE IF EXISTS sp_removeProductInCart;
 delimiter //
-create procedure sp_removeProductInCart(
-	in sCartId bigint,
-    in sProductId bigint,
-    out sMessage varchar(200)
+delimiter //
+CREATE PROCEDURE `sp_removeProductInCart`(
+	in pCartId bigint,
+    in pProductId bigint,
+    out pMessage varchar(200)
 )
 begin
-	declare sDeleteCart varchar(200);
-    set sDeleteCart = "";
+	declare pDeleteCart varchar(200);
+    set pDeleteCart = "";
 	-- Nếu sản phẩm trong bảng cart_item
-	if(exists (select `productId`, `cartId` from `cart_item` where `productId` = sProductId and `cartId` =sCartId)) then
-		DELETE FROM `cart_item` WHERE (`productId` = sProductId and `cartId` = sCartId);
-        set sMessage = concat("Delete product in cart productId:", sProductId, "cartId:",sCartId);
+	if(exists (select `productId`, `cartId` from `cart_item` where `productId` = pProductId and `cartId` =pCartId)) then
+		DELETE FROM `cart_item` WHERE (`productId` = pProductId and `cartId` = pCartId);
+        set pMessage = concat("Delete product in cart productId:", pProductId, "cartId:",pCartId);
     end if;
     -- Nếu trong bảng cart_item không còn sản phẩm nào thì xóa cart trong bảng cart
-    if(not exists (SELECT * FROM `cart_item` where `cartId` = sCartId)) then
-		DELETE FROM `cart` WHERE (`id` = sCartId);
-        set sMessage = concat("Delete cart","cartId:",sCartId, "productId:", sProductId);
+    if(not exists (SELECT * FROM `cart_item` where `cartId` = pCartId)) then
+		DELETE FROM `cart` WHERE (`id` = pCartId);
+        set pMessage = concat("Delete cart","cartId:",pCartId, "productId:", pProductId);
     end if;
-end;
-//
+end //
+
+-- Kiểm tra số lượng sản phẩm
+drop procedure if exists sp_checkProductQuantity;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_checkProductQuantiy`(
+	in pProductId integer,
+    in pQuantity integer,
+    out pValid boolean
+)
+BEGIN
+	declare pTotal integer;
+    set pValid = false;
+    set pTotal  = (select `quantity` from `product` where `id` = pProductId);
+    if(pQuantity <= pTotal) then
+		set pValid = true;
+    end if;
+END
 
 -- Cải tiến thêm sản phẩm vào giỏ hàng - VẬN DỤNG Tham số INOUT
 /**
 	Lần đầu: truyền các thông tin về giỏ hàng lên: sessionid, token, idstatus, productId, quantity
     Nếu cartId chưa có (=NULL) thì tạo mới và gửi về MÃ CARDID được tạo
     Nếu cartId đã có thì thêm và cập nhật số lượng cho sản phẩm
+    
+    Lưu ý: 
+		khi sử dụng store procedure với transaction thì lúc rollback nó vẫn chạy các lệnh ở bên dưới, 
+        nên ta có thể đưa về cuối để nó rollback
+		Nếu sử dụng với SQL Exception thì ok
 **/
 DROP PROCEDURE IF EXISTS sp_addToCartAdvance;
 delimiter //
 create procedure sp_addToCartAdvance(
-	inout sCartId bigint,
-	in sSessionId varchar(100),
-    in sTokenId varchar(100),
-    in sStatus SMALLINT,
-    in sProductId bigint,
-    in sQuantity SMALLINT,
-    in sPrice float,
-    out sMessage varchar(200)
+	inout pCartId bigint,
+	in pSessionId varchar(100),
+    in pTokenId varchar(100),
+    in pStatus SMALLINT,
+    in pProductId bigint,
+    in pQuantity SMALLINT,
+    in pPrice float,
+    out pMessage varchar(200)
 )
 begin
-    declare pAmount SMALLINT;
-    declare pTempTotal SMALLINT;
-    if((not exists (select * from cart where `id` = sCartId)) or sCartId = NULL) then
-		INSERT INTO `cart` (`userId`,`sessionId`, `token`, `status`, `createdAt`) 
-		VALUES ('1', sSessionId, sTokenId, '1', '2022-10-20 00:00:00');
-        set sCartId = (SELECT max(id) from cart);
-    end if;
+    declare bAmount SMALLINT;
+    declare bTempTotal SMALLINT;
+    declare bAddCartItem boolean;
     
-    if(exists (SELECT `productId` FROM `cart_item` where `productId`  = sProductId and `cartId` = sCartId)) then
-            set pAmount = (SELECT `quantity` FROM `cart_item` where `productId`  = sProductId and `cartId` = sCartId);
-            set pTempTotal = pAmount + sQuantity;
-			UPDATE `cart_item` SET `quantity` = pTempTotal  WHERE (`productId`  = sProductId and `cartId` = sCartId);
-            set sMessage = concat("Update quantity success ","cartId:", sCartId,"productId:",sProductId,"quantity:", pTempTotal);
+    START TRANSACTION;
+	set @bCheckCartExists = (not exists (select * from cart where `id` = pCartId)) or pCartId = NULL;
+	if(@bCheckCartExists) then
+			INSERT INTO `cart` (`userId`,`sessionId`, `token`, `status`, `createdAt`) 
+			VALUES ('1', pSessionId, pTokenId, '1', now());
+			set pCartId = (SELECT max(id) from cart);
+	end if;
+    set @bAmount = (SELECT `quantity` FROM `cart_item` where `productId`  = pProductId and `cartId` = pCartId);
+	set @bTempTotal = @bAmount + pQuantity;
+	
+    set @bValid = 0;
+   -- select concat(pCartId, @bValid, pMessage, "----");
+    if(exists (SELECT `productId` FROM `cart_item` where `productId`  = pProductId and `cartId` = pCartId)) then
+            UPDATE `cart_item` SET `quantity` = @bTempTotal  WHERE (`productId`  = pProductId and `cartId` = pCartId);
+			set pMessage = concat("Update quantity success ","cartId:", pCartId,"productId:",pProductId,"quantity:", @bTempTotal);
+            
+            call sp_checkProductQuantiy(pProductId, @bTempTotal, @bValid);	
+			set @bQuantity = (select `quantity` from `product` where `id` = pProductId);
+			UPDATE `product` SET `quantity` = (@bQuantity - @bTempTotal) WHERE (`id` = pProductId);
 		else
-            INSERT INTO `cart_item` (`productId`, `cartId`, `sku`, `price`, `discount`, 
+			INSERT INTO `cart_item` (`productId`, `cartId`, `sku`, `price`, `discount`, 
 			`quantity`, `active`, `createdAt`, `updatedAt`) VALUES 
-			(sProductId, sCartId, 'sp2', sPrice, '0', sQuantity, '1', now(), now());
-            set sMessage = concat("Add item to cart success ","cartId:", sCartId,"productId:", sProductId, "quantity:" , 1);
+			(pProductId, pCartId, 'sp2', pPrice, '0', pQuantity, '1', now(), now());
+            
+            call sp_checkProductQuantiy(pProductId, 1, @bValid);	
+            set @bQuantity = (select `quantity` from `product` where `id` = pProductId);
+            UPDATE `product` SET `quantity` = (@bQuantity - 1) WHERE (`id` = pProductId);
+			set pMessage = concat("Add item to cart success ","cartId:", pCartId,"productId:", pProductId, "quantity:" , 1);
         end if;
+	
+	
+	if(@bValid = false) then
+		set pMessage = "Update fail quantity not valid....";
+        select concat(pCartId, @bValid, pMessage, "vvvv");
+		ROLLBACK;
+	end if;
+	COMMIT;
 end; //
+
