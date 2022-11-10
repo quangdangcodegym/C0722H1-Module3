@@ -36,7 +36,12 @@
       <tr>
         <th>Country:</th>
         <td>
-          <input type="text" name="country" id="country" size="15"/>
+          <select name="idcountry">
+            <c:forEach items="${applicationScope.listCountry}" var="country">
+              <option
+                      value="${country.getId()}">${country.getName()}</option>
+            </c:forEach>
+          </select>
         </td>
       </tr>
       <tr>

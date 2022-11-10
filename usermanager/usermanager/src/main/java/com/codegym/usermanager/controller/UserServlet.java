@@ -1,7 +1,10 @@
 package com.codegym.usermanager.controller;
 
+import com.codegym.usermanager.dao.CountryDAO;
+import com.codegym.usermanager.dao.ICountryDAO;
 import com.codegym.usermanager.dao.IUserDAO;
 import com.codegym.usermanager.dao.UserDAO;
+import com.codegym.usermanager.model.Country;
 import com.codegym.usermanager.model.User;
 
 import javax.servlet.RequestDispatcher;
@@ -17,10 +20,17 @@ import java.util.List;
 public class UserServlet extends HttpServlet {
 
     private IUserDAO userDAO;
+    private ICountryDAO countryDAO;
 
     @Override
     public void init() throws ServletException {
         userDAO = new UserDAO();
+        countryDAO = new CountryDAO();
+
+        // applicationScope <=> getServletContext()
+        if (getServletContext().getAttribute("listCountry") == null) {
+            getServletContext().setAttribute("listCountry", countryDAO.selectAllCountrys());
+        }
     }
 
     @Override
@@ -75,9 +85,9 @@ public class UserServlet extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
         String name = req.getParameter("name");
         String email = req.getParameter("email");
-        String country = req.getParameter("country");
+        int idCountry =Integer.parseInt( req.getParameter("idcountry"));
 
-        User user = new User(id, name, email, country);
+        User user = new User(id, name, email, idCountry);
         userDAO.updateUser(user);
 
         resp.sendRedirect("/user");
@@ -87,24 +97,29 @@ public class UserServlet extends HttpServlet {
     private void insertUser(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String name = req.getParameter("name");
         String email = req.getParameter("email");
-        String country = req.getParameter("country");
-        User user = new User(-1, name, email, country);
+        int idCountry = Integer.parseInt(req.getParameter("idcountry"));
+        User user = new User(-1, name, email, idCountry);
         userDAO.insertUser(user);
 
         req.setAttribute("message", "Insert success!!");
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/user/create.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("WEB-INF/user/create.jsp");
         requestDispatcher.forward(req, resp);
     }
 
     private void showListUser(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
         List<User> list = userDAO.selectAllUsers();
+
+
+        List<Country> listCountry = countryDAO.selectAllCountrys();
+
         req.setAttribute("listUser", list);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/user/list.jsp");
+        req.setAttribute("listCountry", listCountry);
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/list.jsp");
         requestDispatcher.forward(req, resp);
     }
 
     private void showCreateForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/user/create.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/create.jsp");
         requestDispatcher.forward(req, resp);
     }
 }

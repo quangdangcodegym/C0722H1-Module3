@@ -36,7 +36,15 @@
       <tr>
         <th>Country:</th>
         <td>
-          <input type="text" name="country" value="${requestScope.user.getCountry()}" id="country" size="15"/>
+          <select name="idcountry">
+              <c:forEach items="${applicationScope.listCountry}" var="country">
+                <option
+                        <c:if test="${country.getId() == user.getIdCountry()}">
+                          selected
+                        </c:if>
+                        value="${country.getId()}">${country.getName()}</option>
+              </c:forEach>
+          </select>
         </td>
       </tr>
       <tr>

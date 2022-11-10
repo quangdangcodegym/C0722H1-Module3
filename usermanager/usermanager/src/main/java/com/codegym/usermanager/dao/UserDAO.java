@@ -6,31 +6,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserDAO implements IUserDAO {
+public class UserDAO extends DatabaseContext implements IUserDAO {
     private static final String SELECT_ALL_USER = "SELECT * FROM users;";
     private static final String SELECT_USER_BY_ID = "SELECT * FROM users where id = ?;";
-    private static final String INSERT_USER = "insert into users(name, email, country) values(?,?,?);";
+    private static final String INSERT_USER = "insert into users(name, email, idcountry) values(?,?,?);";
     private static final String UPDATE_USER = "UPDATE `users` " +
-            "SET `name` = ?, `email` = ?, `country` = ? WHERE (`id` = ?);";
+            "SET `name` = ?, `email` = ?, `idcountry` = ? WHERE (`id` = ?);";
     private static final String DELETE_USER = "DELETE FROM `users` WHERE (`id` = ?);";
-    private String jdbcURL = "jdbc:mysql://localhost:3306/c07_usermanager?useSSL=false";
-    private String jdbcUsername = "root";
-    private String jdbcPassword = "St180729!!";
 
-    protected Connection getConnection() {
-        Connection connection = null;
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection(jdbcURL, jdbcUsername, jdbcPassword);
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return connection;
-    }
 
     @Override
     public void insertUser(User user) {
@@ -40,7 +23,7 @@ public class UserDAO implements IUserDAO {
             preparedStatement = connection.prepareStatement(INSERT_USER);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getEmail());
-            preparedStatement.setString(3, user.getCountry());
+            preparedStatement.setInt(3, user.getIdCountry());
             preparedStatement.executeUpdate();
             connection.close();
             System.out.println(this.getClass() + " insertUser :" + preparedStatement);
@@ -73,8 +56,8 @@ public class UserDAO implements IUserDAO {
         int idUser = rs.getInt("id");
         String name = rs.getString("name");
         String email = rs.getString("email");
-        String country = rs.getString("country");
-        User user = new User(idUser, name, email, country);
+        int idCountry = rs.getInt("idcountry");
+        User user = new User(idUser, name, email, idCountry);
         return user;
 
     }
@@ -126,7 +109,7 @@ public class UserDAO implements IUserDAO {
             PreparedStatement pr = connection.prepareStatement(UPDATE_USER);
             pr.setString(1, user.getName());
             pr.setString(2, user.getEmail());
-            pr.setString(3, user.getCountry());
+            pr.setInt(3, user.getIdCountry());
             pr.setInt(4, user.getId());
             System.out.println(this.getClass() + " updateUser: " + pr);
             check =  pr.executeUpdate() > 0;
@@ -138,19 +121,5 @@ public class UserDAO implements IUserDAO {
 
     }
 
-    private void printSQLException(SQLException ex) {
-        for (Throwable e : ex) {
-            if (e instanceof SQLException) {
-                e.printStackTrace(System.err);
-                System.err.println("SQLState: " + ((SQLException) e).getSQLState());
-                System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
-                System.err.println("Message: " + e.getMessage());
-                Throwable t = ex.getCause();
-                while (t != null) {
-                    System.out.println("Cause: " + t);
-                    t = t.getCause();
-                }
-            }
-        }
-    }
+
 }
