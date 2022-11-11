@@ -42,7 +42,31 @@
                             </div>
                         </div>
                         <!-- end page title -->
+                        <div class="row justify-content-end">
+                            <nav class="navbar navbar-light bg-light">
+                                <form class="form-inline" action="user">
+                                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" value="${requestScope.q}" name="q">
+                                    <select name="idcountry" class="form-control mr-1" >
+                                        <c:forEach items="${applicationScope.listCountry}" var="country">
+                                            <c:choose>
+                                                <c:when test="${country.getId()==requestScope.idcountry}">
+                                                    <option
+                                                            value="${country.getId()}">${country.getName()}
+                                                    </option>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <option
+                                                            value="${country.getId()}">${country.getName()}
+                                                    </option>
+                                                </c:otherwise>
+                                            </c:choose>
 
+                                        </c:forEach>
+                                    </select>
+                                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                                </form>
+                            </nav>
+                        </div>
                         <div class="row">
                             <table class="table m-0">
 
@@ -97,11 +121,21 @@
             <!-- ============================================================== -->
             <!-- End Page content -->
             <!-- ============================================================== -->
+            <div class="row justify-content-center">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination">
+                        <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    </ul>
 
+                </nav>
+            </div>
         </div>
         <!-- END wrapper -->
         <jsp:include page="/WEB-INF/layout/rightbar.jsp"></jsp:include>
-
 
         <jsp:include page="/WEB-INF/layout/footer_js.jsp">
             <jsp:param name="page" value="list"/>

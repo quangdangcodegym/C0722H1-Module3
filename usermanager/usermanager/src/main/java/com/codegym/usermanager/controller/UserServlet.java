@@ -50,7 +50,7 @@ public class UserServlet extends HttpServlet {
                 showEditForm(req, resp);
                 break;
             default:
-                showListUser(req, resp);
+                listUserPaging(req,resp);
 
         }
     }
@@ -174,6 +174,33 @@ public class UserServlet extends HttpServlet {
         req.setAttribute("user", user);
         RequestDispatcher requestDispatcher = req.getRequestDispatcher("WEB-INF/user/create.jsp");
         requestDispatcher.forward(req, resp);
+
+    }
+    private void listUserPaging(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        int page = 1;
+        int recordPerPage = 3;
+        String q = "";
+        int idCountry = -1;
+        if (req.getParameter("q")!=null){
+            q = req.getParameter("q");
+        }
+        if (req.getParameter("idcountry")!=null){
+            idCountry = Integer.parseInt(req.getParameter("idcountry"));
+        }
+        if (req.getParameter("page")!=null){
+            page = Integer.parseInt(req.getParameter("page"));
+        }
+        List<User> listUser = userDAO.selectAllUsers(q,idCountry,(page-1)*recordPerPage,recordPerPage);
+        int numberOfRecord = userDAO.getNumOfRecords();
+        int numberOfPage =(int) Math.ceil(numberOfRecord * 1.0/ recordPerPage);
+        req.setAttribute("listUser", listUser);
+        req.setAttribute("noOfPages", numberOfPage);
+        req.setAttribute("currentPage", page);
+        req.setAttribute("q", q);
+        req.setAttribute("idcountry", idCountry);
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/list.jsp");
+        requestDispatcher.forward(req,resp);
+
 
     }
 

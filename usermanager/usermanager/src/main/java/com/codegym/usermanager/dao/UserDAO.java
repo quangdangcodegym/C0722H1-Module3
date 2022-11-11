@@ -14,8 +14,10 @@ public class UserDAO extends DatabaseContext implements IUserDAO {
             "SET `name` = ?, `email` = ?, `idcountry` = ? WHERE (`id` = ?);";
     private static final String DELETE_USER = "DELETE FROM `users` WHERE (`id` = ?);";
     private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM users where email like ?;";
+    private static final String SELECT_ALL_USER_PAGGING = "SELECT * FROM users where name like ? and idcountry = ? limit ?,?";
 
 
+    private int numOfRecords = 0;
     @Override
     public void insertUser(User user) {
         Connection connection = getConnection();
@@ -144,5 +146,43 @@ public class UserDAO extends DatabaseContext implements IUserDAO {
         return null;
     }
 
+    @Override
+    public List<User> selectAllUsers(String keyword, int idCountry,
+                                     int page, int numOfPage) {
+        List<User> userList = new ArrayList<>();
+        try {
+            Connection connection = getConnection();
+            //SELECT * FROM users where name like ? and idcountry = ? limit ?,?
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_USER_PAGGING);
+            preparedStatement.setString(1, "%" +  keyword + "%");
+            preparedStatement.setInt(2, idCountry);
+            preparedStatement.setInt(3, page);
+            preparedStatement.setInt(4, numOfPage);
 
+            System.out.println(this.getClass() + " selectAllUsers: " + preparedStatement);
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                User user = getUserFromResultSet(rs);
+                userList.add(user);
+            }
+            rs.close();
+            rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                this.numOfRecords = rs.getInt(1);
+            }
+
+        } catch (SQLException sqlException) {
+            printSQLException(sqlException);
+        }
+        return userList;
+    }
+
+    @Override
+    public int getNumOfRecords() {
+        return numOfRecords;
+    }
+
+    public void setNumOfRecords(int numOfRecords) {
+        this.numOfRecords = numOfRecords;
+    }
 }

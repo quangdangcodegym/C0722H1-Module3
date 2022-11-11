@@ -17,4 +17,7 @@ public interface IUserDAO {
     public boolean updateUser(User user);
 
     public User findUserByEmail(String email);
+
+    public List<User> selectAllUsers(String keyword, int idCountry, int page, int numOfPage);
+    public int getNumOfRecords();
 }
