@@ -13,6 +13,7 @@ public class UserDAO extends DatabaseContext implements IUserDAO {
     private static final String UPDATE_USER = "UPDATE `users` " +
             "SET `name` = ?, `email` = ?, `idcountry` = ? WHERE (`id` = ?);";
     private static final String DELETE_USER = "DELETE FROM `users` WHERE (`id` = ?);";
+    private static final String SELECT_USER_BY_EMAIL = "SELECT * FROM users where email like ?;";
 
 
     @Override
@@ -119,6 +120,28 @@ public class UserDAO extends DatabaseContext implements IUserDAO {
         }
         return check;
 
+    }
+
+    @Override
+    public User findUserByEmail(String email) {
+
+        try {
+            Connection connection = getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_USER_BY_EMAIL);
+            preparedStatement.setString(1, email);
+
+            System.out.println(this.getClass() + " findUserByEmail: " + preparedStatement);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            rs.next();
+            User user = getUserFromResultSet(rs);
+            connection.close();
+            return user;
+
+        } catch (SQLException sqlException) {
+            printSQLException(sqlException);
+        }
+        return null;
     }
 
 

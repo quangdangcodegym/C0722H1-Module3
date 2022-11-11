@@ -13,8 +13,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @WebServlet(name = "UserServlet", urlPatterns = "/user")
 public class UserServlet extends HttpServlet {
@@ -57,7 +60,7 @@ public class UserServlet extends HttpServlet {
         User u = userDAO.selectUser(id);
 
         req.setAttribute("user", u);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/user/edit.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/edit.jsp");
         requestDispatcher.forward(req, resp);
 
     }
@@ -80,30 +83,98 @@ public class UserServlet extends HttpServlet {
         }
     }
 
-    private void updateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    private void updateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 
-        int id = Integer.parseInt(req.getParameter("id"));
-        String name = req.getParameter("name");
-        String email = req.getParameter("email");
-        int idCountry =Integer.parseInt( req.getParameter("idcountry"));
+        List<String> errors = new ArrayList<>();
+        User user = new User();
+        try {
+            String name = req.getParameter("name");
+            String email = req.getParameter("email");
+            int idCountry = Integer.parseInt(req.getParameter("idcountry"));
+            int id = Integer.parseInt(req.getParameter("id"));
+            user.setName(name);
+            user.setEmail(email);
+            user.setIdCountry(idCountry);
+            user.setId(id);
 
-        User user = new User(id, name, email, idCountry);
-        userDAO.updateUser(user);
+            ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+            Validator validator = validatorFactory.getValidator();
+            Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
+            if (!constraintViolations.isEmpty()) {
+                for (ConstraintViolation<User> e : constraintViolations) {
+                    errors.add(e.getMessage());
+                }
+            } else {
+                if (countryDAO.selectCountry(idCountry)==null) {
+                    errors.add("Country not exists");
+                }else{
+                    if (userDAO.findUserByEmail(email) != null) {
+                        errors.add("Email exists");
+                    } else {
+                        userDAO.updateUser(user);
+//                        req.setAttribute("message", "Insert success!!");
+                        resp.sendRedirect("/user");
+                        return;
+                    }
+                }
 
-        resp.sendRedirect("/user");
+            }
+        } catch (NumberFormatException numberFormatException) {
+            errors.add("Country not valid");
+        }
+        req.setAttribute("errors", errors);
+        req.setAttribute("user", user);
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/edit.jsp");
+        requestDispatcher.forward(req, resp);
+
+
+
+
+
 
     }
 
     private void insertUser(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String name = req.getParameter("name");
-        String email = req.getParameter("email");
-        int idCountry = Integer.parseInt(req.getParameter("idcountry"));
-        User user = new User(-1, name, email, idCountry);
-        userDAO.insertUser(user);
+        List<String> errors = new ArrayList<>();
+        User user = new User();
+        try {
+            String name = req.getParameter("name");
+            String email = req.getParameter("email");
+            int idCountry = Integer.parseInt(req.getParameter("idcountry"));
+            user.setName(name);
+            user.setEmail(email);
+            user.setIdCountry(idCountry);
 
-        req.setAttribute("message", "Insert success!!");
+            ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+            Validator validator = validatorFactory.getValidator();
+            Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
+            if (!constraintViolations.isEmpty()) {
+                for (ConstraintViolation<User> e : constraintViolations) {
+                    errors.add(e.getMessage());
+                }
+            } else {
+                if (countryDAO.selectCountry(idCountry)==null) {
+                    errors.add("Country not exists");
+                }else{
+                    if (userDAO.findUserByEmail(email) != null) {
+                        errors.add("Email exists");
+                    } else {
+                        userDAO.insertUser(user);
+                        req.setAttribute("message", "Insert success!!");
+                    }
+                }
+
+            }
+        } catch (NumberFormatException numberFormatException) {
+            errors.add("Country not valid");
+        }
+
+//        errors.
+        req.setAttribute("errors", errors);
+        req.setAttribute("user", user);
         RequestDispatcher requestDispatcher = req.getRequestDispatcher("WEB-INF/user/create.jsp");
         requestDispatcher.forward(req, resp);
+
     }
 
     private void showListUser(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{

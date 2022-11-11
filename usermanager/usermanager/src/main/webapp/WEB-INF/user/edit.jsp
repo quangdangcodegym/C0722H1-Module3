@@ -6,7 +6,7 @@
 
     <head>
         <meta charset="utf-8">
-        <title>Form Elements | Zircos - Responsive Bootstrap 4 Admin Dashboard</title>
+        <title>Form Elements | Update User</title>
         <jsp:include page="/WEB-INF/layout/meta_css.jsp"></jsp:include>
 
     </head>
@@ -47,10 +47,8 @@
 
                         <div class="row justify-content-center">
 
-
-
                                 <div class="col-8">
-                                        <c:if test="${requestScope.errors.isEmpty() == false}">
+                                        <c:if test="${requestScope.errors!=null}">
                                             <div class="alert alert-danger">
                                             <ul>
                                                 <c:forEach items="${requestScope.errors}" var="e">
@@ -85,6 +83,9 @@
                                                 <select name="idcountry" class="form-control">
                                                     <c:forEach items="${applicationScope.listCountry}" var="country">
                                                         <option
+                                                                <c:if test="${country.getId() == user.getIdCountry()}">
+                                                                    selected
+                                                                </c:if>
                                                                 value="${country.getId()}">${country.getName()}</option>
                                                     </c:forEach>
                                                 </select>
@@ -125,17 +126,6 @@
         <jsp:include page="/WEB-INF/layout/footer_js.jsp">
             <jsp:param name="page" value="create"/>
         </jsp:include>
-
-        <c:if test="${requestScope.message!=null}">
-            <script>
-                let message = '<%= request.getAttribute("message") %>';
-
-                let message1 = '${requestScope.message}';
-                window.onload = ()=>{
-                    toastr["success"](message);
-                }
-            </script>
-        </c:if>
 
     </body>
 

@@ -26,6 +26,10 @@ dependencies {
     implementation group: 'javax.servlet', name: 'jstl', version: '1.2'
     implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.23'
 
+
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-validator
+    implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.0.13.Final'
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 }
