@@ -60,7 +60,7 @@ public class UserServlet extends HttpServlet {
         User u = userDAO.selectUser(id);
 
         req.setAttribute("user", u);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/edit.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/edit.jsp");
         requestDispatcher.forward(req, resp);
 
     }
@@ -124,7 +124,7 @@ public class UserServlet extends HttpServlet {
         }
         req.setAttribute("errors", errors);
         req.setAttribute("user", user);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/edit.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/edit.jsp");
         requestDispatcher.forward(req, resp);
 
 
@@ -172,7 +172,7 @@ public class UserServlet extends HttpServlet {
 //        errors.
         req.setAttribute("errors", errors);
         req.setAttribute("user", user);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("WEB-INF/user/create.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/create.jsp");
         requestDispatcher.forward(req, resp);
 
     }
@@ -198,7 +198,7 @@ public class UserServlet extends HttpServlet {
         req.setAttribute("currentPage", page);
         req.setAttribute("q", q);
         req.setAttribute("idcountry", idCountry);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/list.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/list.jsp");
         requestDispatcher.forward(req,resp);
 
 
@@ -212,12 +212,12 @@ public class UserServlet extends HttpServlet {
 
         req.setAttribute("listUser", list);
         req.setAttribute("listCountry", listCountry);
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/list.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/list.jsp");
         requestDispatcher.forward(req, resp);
     }
 
     private void showCreateForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/user/create.jsp");
+        RequestDispatcher requestDispatcher = req.getRequestDispatcher("/WEB-INF/admin/user/create.jsp");
         requestDispatcher.forward(req, resp);
     }
 }
